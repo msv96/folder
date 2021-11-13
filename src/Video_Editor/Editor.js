@@ -7,10 +7,9 @@ import {
 	faPause,
 	faPlay,
 	faGripLinesVertical,
-	faSync,
-	faStepBackward,
-	faStepForward,
 } from "@fortawesome/free-solid-svg-icons";
+import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
+const ffmpeg = createFFmpeg({ log: true });
 
 class Editor extends React.Component {
 	constructor(props) {
@@ -24,6 +23,10 @@ class Editor extends React.Component {
 			deletingGrabber: false,
 			current_warning: null,
 			imageUrl: "",
+			getReady: false,
+			videoReady: false,
+			// downloadVideo: "",
+			downloadVideo: [],
 		};
 		this.playVideo = React.createRef();
 		this.progressBar = React.createRef();
@@ -40,8 +43,14 @@ class Editor extends React.Component {
 
 	reader = new FileReader();
 
+	load = async () => {
+		await ffmpeg.load();
+		this.setState({ getReady: true });
+	};
+
 	componentDidMount = () => {
 		// Check if video ended
+		this.load();
 		var self = this;
 		this.playVideo.current.addEventListener("timeupdate", function () {
 			var curr_idx = self.state.currently_grabbed.index;
@@ -98,64 +107,48 @@ class Editor extends React.Component {
 		};
 	};
 
-	reset = () => {
-		this.playVideo.current.pause();
-		this.setState(
-			{
-				isMuted: false,
-				timings: [{ start: 0, end: this.playVideo.current.duration }],
-				playing: false,
-				currently_grabbed: { index: 0, type: "none" },
-				difference: 0.2,
-				deletingGrabber: false,
-				current_warning: null,
-				imageUrl: "",
-			},
-			() => {
-				this.playVideo.current.currentTime =
-					this.state.timings[0].start;
-				this.progressBar.current.style.left = `${
-					(this.state.timings[0].start /
-						this.playVideo.current.duration) *
-					100
-				}%`;
-				this.progressBar.current.style.width = "0%";
-				this.addActiveSegments();
-			}
+	converter = async () => {
+    this.saveVideo();
+		ffmpeg.FS(
+			"writeFile",
+			"test.mp4",
+			await fetchFile(this.props.video_file[0])
 		);
-	};
-
-	downloadSnapshot = () => {
-		var a = document.createElement("a"); //Create <a>
-		a.href = this.state.imageUrl; //Image Base64 Goes here
-		a.download = "Thumbnail.png"; //File name Here
-		a.click(); //Downloaded file
-	};
-
-	skipPrevious = () => {
-		if (this.state.playing) {
-			this.playVideo.current.pause();
+		// await ffmpeg.run(
+		// 	"-i",
+		// 	"test.mp4",
+		// 	"-t",
+		// 	"5.0",
+		// 	"-ss",
+		// 	"0.0",
+		// 	"-f",
+		// 	"mp4",
+		// 	"out.mp4"
+		// );
+		// const output_video = ffmpeg.FS("readFile", "out.mp4");
+		// const video_url = URL.createObjectURL(
+		// 	new Blob([output_video.buffer], { type: "video/mp4" })
+		// );
+		// this.setState({ downloadVideo: video_url, videoReady: true });
+		for await (let el of this.state.timings) {
+			await ffmpeg.run(
+				"-i",
+				"test.mp4",
+				"-t",
+				(el.end - el.start).toFixed(2),
+				"-ss",
+				(el.start).toFixed(2),
+				"-f",
+				"mp4",
+				Math.floor(el.end)+".mp4"
+			);
+			const output_video = ffmpeg.FS("readFile", Math.floor(el.end)+".mp4");
+			const video_url = URL.createObjectURL(
+				new Blob([output_video.buffer], { type: "video/mp4" })
+			);
+			this.setState({ downloadVideo: [...video_url] });
 		}
-		var prev_idx =
-			this.state.currently_grabbed.index !== 0
-				? this.state.currently_grabbed.index - 1
-				: this.state.timings.length - 1;
-		this.setState(
-			{
-				currently_grabbed: { index: prev_idx, type: "start" },
-				playing: false,
-			},
-			() => {
-				this.progressBar.current.style.left = `${
-					(this.state.timings[prev_idx].start /
-						this.playVideo.current.duration) *
-					100
-				}%`;
-				this.progressBar.current.style.width = "0%";
-				this.playVideo.current.currentTime =
-					this.state.timings[prev_idx].start;
-			}
-		);
+		this.setState({ videoReady: true });
 	};
 
 	play_pause = () => {
@@ -188,32 +181,6 @@ class Editor extends React.Component {
 			this.playVideo.current.play();
 		}
 		this.setState({ playing: !this.state.playing });
-	};
-
-	skipNext = () => {
-		if (this.state.playing) {
-			this.playVideo.current.pause();
-		}
-		var next_idx =
-			this.state.currently_grabbed.index !== this.state.timings.length - 1
-				? this.state.currently_grabbed.index + 1
-				: 0;
-		this.setState(
-			{
-				currently_grabbed: { index: next_idx, type: "start" },
-				playing: false,
-			},
-			() => {
-				this.progressBar.current.style.left = `${
-					(this.state.timings[next_idx].start /
-						this.playVideo.current.duration) *
-					100
-				}%`;
-				this.progressBar.current.style.width = "0%";
-				this.playVideo.current.currentTime =
-					this.state.timings[next_idx].start;
-			}
-		);
 	};
 
 	updateProgress = (event) => {
@@ -470,7 +437,7 @@ class Editor extends React.Component {
 	};
 
 	saveVideo = () => {
-		this.props.saveVideo({ trim_times: this.state.timings });
+		console.log(this.state.timings);
 	};
 
 	render = () => {
@@ -494,16 +461,8 @@ class Editor extends React.Component {
 					></div>
 					<div className="progress" ref={this.progressBar}></div>
 				</div>
-
 				<div className="controls">
 					<div className="player-controls">
-						<button
-							className="settings-control"
-							title="Reset Video"
-							onClick={this.reset}
-						>
-							<FontAwesomeIcon icon={faSync} />
-						</button>
 						<button
 							className="settings-control"
 							title="Mute/Unmute Video"
@@ -520,13 +479,6 @@ class Editor extends React.Component {
 					</div>
 					<div className="player-controls">
 						<button
-							className="seek-start"
-							title="Skip to previous clip"
-							onClick={this.skipPrevious}
-						>
-							<FontAwesomeIcon icon={faStepBackward} />
-						</button>
-						<button
 							className="play-control"
 							title="Play/Pause"
 							onClick={this.play_pause.bind(this)}
@@ -536,13 +488,6 @@ class Editor extends React.Component {
 							) : (
 								<FontAwesomeIcon icon={faPlay} />
 							)}
-						</button>
-						<button
-							className="seek-end"
-							title="Skip to next clip"
-							onClick={this.skipNext}
-						>
-							<FontAwesomeIcon icon={faStepForward} />
 						</button>
 					</div>
 					<div>
@@ -577,6 +522,37 @@ class Editor extends React.Component {
 				) : (
 					""
 				)}
+				{this.state.getReady ? (
+					<button type="submit" onClick={this.converter}>
+						Convert
+					</button>
+				) : (
+					<p>Loading...</p>
+				)}
+				{this.state.videoReady
+					? // <video
+					  // 	width="320"
+					  // 	height="180"
+					  // 	autoload="metadata"
+					  // 	controls
+					  // >
+					  // 	<source
+					  // 		src={this.state.downloadVideo}
+					  // 		type="video/mp4"
+					  // 	/>
+					  // </video>
+					  this.state.downloadVideo.map((e) => {
+							return (
+								<video
+									width="320"
+									height="180"
+									controls
+								>
+									<source src={e} type="video/mp4" />
+								</video>
+							);
+					  })
+					: ""}
 			</div>
 		);
 	};

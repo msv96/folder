@@ -2,7 +2,7 @@ import Editor from "./Video_Editor/VideoEditor";
 
 function App() {
 	return (
-		<div className="App">
+		<div>
 			<Editor />
 		</div>
 	);

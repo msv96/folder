@@ -1,5 +1,4 @@
 import React from "react";
-import { FileDrop } from "react-file-drop";
 import "./editor.css";
 import Editor from "./Editor";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,15 +11,12 @@ class VideoEditor extends React.Component {
 			isUpload: true,
 			videoUrl: "",
 			isDarkMode: false,
+			video_file: undefined,
 		};
 	}
 
 	componentDidMount = () => {
 		this.toggleThemes();
-		document.addEventListener("drop", function (e) {
-			e.preventDefault();
-			e.stopPropagation();
-		});
 	};
 
 	render_uploader = () => {
@@ -32,28 +28,26 @@ class VideoEditor extends React.Component {
 					className="hidden"
 					id="up_file"
 				/>
-				<FileDrop
-					onDrop={(e) => this.upload_file(e)}
-					onTargetClick={() =>
-						document.getElementById("up_file").click()
-					}
+				<div
+					className="file-drop"
+					onClick={() => document.getElementById("up_file").click()}
 				>
-					Click or drop your video here to edit!
-				</FileDrop>
+					<div className="file-drop-target">
+						Click to upload your video and edit!
+					</div>
+				</div>
 			</div>
 		);
-	};
-
-	saveVideo = (metadata) => {
-		console.log(metadata);
 	};
 
 	render_editor = () => {
 		return (
 			// Props:
 			// videoUrl --> URL of uploaded video
-			// saveVideo(<metadata of edited video>) --> gives the cut times and if video is muted or not
-			<Editor videoUrl={this.state.videoUrl} saveVideo={this.saveVideo} />
+			<Editor
+				videoUrl={this.state.videoUrl}
+        video_file={this.state.video_file}
+			/>
 		);
 	};
 
@@ -73,6 +67,7 @@ class VideoEditor extends React.Component {
 		this.setState({
 			isUpload: false,
 			videoUrl: fileUrl,
+			video_file: fileInput,
 		});
 	};
 

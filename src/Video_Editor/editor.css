@@ -162,40 +162,6 @@ body {
 .controls .player-controls .play-control:active {
 	color: #ffffff;
 }
-.controls .player-controls .seek-start {
-	background: #2f3b44;
-	border: 0;
-	color: #a5b0b5;
-	padding: 0.5rem;
-	border-radius: 4px;
-	cursor: pointer;
-	font-weight: bold;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-.controls .player-controls .seek-start:hover {
-	background: #445562;
-}
-.controls .player-controls .seek-start:active {
-	color: #ffffff;
-}
-.controls .player-controls .seek-end {
-	background: #2f3b44;
-	border: 0;
-	color: #a5b0b5;
-	padding: 0.5rem;
-	border-radius: 4px;
-	cursor: pointer;
-	font-weight: bold;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-.controls .player-controls .seek-end:hover {
-	background: #445562;
-}
-.controls .player-controls .seek-end:active {
-	color: #ffffff;
-}
 .controls .settings-control {
 	background: #2f3b44;
 	border: 0;
@@ -239,15 +205,4 @@ body {
 	margin: 1em;
 	justify-content: center;
 	text-align: center;
-}
-.thumbnail {
-	width: 20%;
-	height: auto;
-	justify-content: center;
-	align-items: center;
-	border: 0.2em solid black;
-	border-radius: 0.3em;
-}
-.marginVertical {
-	margin: 1.5em 0em;
 }
