@@ -6,7 +6,6 @@ import {
 	faVolumeUp,
 	faPause,
 	faPlay,
-	faGripLinesVertical,
 } from "@fortawesome/free-solid-svg-icons";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 const ffmpeg = createFFmpeg({ log: true });
@@ -21,11 +20,7 @@ class Editor extends React.Component {
 			currently_grabbed: { index: 0, type: "none" },
 			difference: 0.2,
 			deletingGrabber: false,
-			current_warning: null,
-			imageUrl: "",
-			getReady: false,
 			videoReady: false,
-			// downloadVideo: "",
 			downloadVideo: [],
 		};
 		this.playVideo = React.createRef();
@@ -33,19 +28,8 @@ class Editor extends React.Component {
 		this.playBackBar = React.createRef();
 	}
 
-	warnings = {
-		delete_grabber: (
-			<div>
-				Please click on the grabber (either start or end) to delete it
-			</div>
-		),
-	};
-
-	reader = new FileReader();
-
 	load = async () => {
 		await ffmpeg.load();
-		this.setState({ getReady: true });
 	};
 
 	componentDidMount = () => {
@@ -108,45 +92,32 @@ class Editor extends React.Component {
 	};
 
 	converter = async () => {
-    this.saveVideo();
 		ffmpeg.FS(
 			"writeFile",
 			"test.mp4",
 			await fetchFile(this.props.video_file[0])
 		);
-		// await ffmpeg.run(
-		// 	"-i",
-		// 	"test.mp4",
-		// 	"-t",
-		// 	"5.0",
-		// 	"-ss",
-		// 	"0.0",
-		// 	"-f",
-		// 	"mp4",
-		// 	"out.mp4"
-		// );
-		// const output_video = ffmpeg.FS("readFile", "out.mp4");
-		// const video_url = URL.createObjectURL(
-		// 	new Blob([output_video.buffer], { type: "video/mp4" })
-		// );
-		// this.setState({ downloadVideo: video_url, videoReady: true });
 		for await (let el of this.state.timings) {
+			let d1 = (el.end - el.start).toFixed(1).toString();
+			let d2 = el.start.toFixed(1).toString();
 			await ffmpeg.run(
 				"-i",
 				"test.mp4",
 				"-t",
-				(el.end - el.start).toFixed(2),
+				d1,
 				"-ss",
-				(el.start).toFixed(2),
+				d2,
 				"-f",
 				"mp4",
-				Math.floor(el.end)+".mp4"
+				`${d1}.mp4`
 			);
-			const output_video = ffmpeg.FS("readFile", Math.floor(el.end)+".mp4");
+			const output_video = ffmpeg.FS("readFile", `${d1}.mp4`);
 			const video_url = URL.createObjectURL(
 				new Blob([output_video.buffer], { type: "video/mp4" })
 			);
-			this.setState({ downloadVideo: [...video_url] });
+			this.setState({
+				downloadVideo: [...this.state.downloadVideo, video_url],
+			});
 		}
 		this.setState({ videoReady: true });
 	};
@@ -292,25 +263,7 @@ class Editor extends React.Component {
 							);
 						}
 					}}
-				>
-					<svg
-						version="1.1"
-						xmlns="http://www.w3.org/2000/svg"
-						x="0"
-						y="0"
-						width="10"
-						height="14"
-						viewBox="0 0 10 14"
-						xmlSpace="preserve"
-						title="Start"
-					>
-						<path
-							className="st0"
-							title="Start"
-							d="M1 14L1 14c-0.6 0-1-0.4-1-1V1c0-0.6 0.4-1 1-1h0c0.6 0 1 0.4 1 1v12C2 13.6 1.6 14 1 14zM5 14L5 14c-0.6 0-1-0.4-1-1V1c0-0.6 0.4-1 1-1h0c0.6 0 1 0.4 1 1v12C6 13.6 5.6 14 5 14zM9 14L9 14c-0.6 0-1-0.4-1-1V1c0-0.6 0.4-1 1-1h0c0.6 0 1 0.4 1 1v12C10 13.6 9.6 14 9 14z"
-						/>
-					</svg>
-				</div>
+				></div>
 				<div
 					className="grabber end"
 					title="End"
@@ -339,25 +292,7 @@ class Editor extends React.Component {
 							);
 						}
 					}}
-				>
-					<svg
-						version="1.1"
-						xmlns="http://www.w3.org/2000/svg"
-						x="0"
-						y="0"
-						width="10"
-						height="14"
-						viewBox="0 0 10 14"
-						xmlSpace="preserve"
-						title="End"
-					>
-						<path
-							className="st0"
-							title="End"
-							d="M1 14L1 14c-0.6 0-1-0.4-1-1V1c0-0.6 0.4-1 1-1h0c0.6 0 1 0.4 1 1v12C2 13.6 1.6 14 1 14zM5 14L5 14c-0.6 0-1-0.4-1-1V1c0-0.6 0.4-1 1-1h0c0.6 0 1 0.4 1 1v12C6 13.6 5.6 14 5 14zM9 14L9 14c-0.6 0-1-0.4-1-1V1c0-0.6 0.4-1 1-1h0c0.6 0 1 0.4 1 1v12C10 13.6 9.6 14 9 14z"
-						/>
-					</svg>
-				</div>
+				></div>
 			</div>
 		));
 	};
@@ -365,7 +300,7 @@ class Editor extends React.Component {
 	addGrabber = () => {
 		var time = this.state.timings;
 		var end = time[time.length - 1].end + this.state.difference;
-		this.setState({ deletingGrabber: false, current_warning: null });
+		this.setState({ deletingGrabber: false });
 		if (end >= this.playVideo.current.duration) {
 			return;
 		}
@@ -377,12 +312,9 @@ class Editor extends React.Component {
 
 	preDeleteGrabber = () => {
 		if (this.state.deletingGrabber) {
-			this.setState({ deletingGrabber: false, current_warning: null });
+			this.setState({ deletingGrabber: false });
 		} else {
-			this.setState({
-				deletingGrabber: true,
-				current_warning: "delete_grabber",
-			});
+			this.setState({ deletingGrabber: true });
 		}
 	};
 
@@ -391,7 +323,6 @@ class Editor extends React.Component {
 		this.setState({
 			timings: time,
 			deletingGrabber: false,
-			current_warning: null,
 			currently_grabbed: { index: 0, type: "start" },
 		});
 		if (time.length === 1) {
@@ -434,10 +365,6 @@ class Editor extends React.Component {
 			100
 		}%, rgb(240, 240, 240) 100%`;
 		this.playBackBar.current.style.background = `linear-gradient(to right${colors})`;
-	};
-
-	saveVideo = () => {
-		console.log(this.state.timings);
 	};
 
 	render = () => {
@@ -496,57 +423,37 @@ class Editor extends React.Component {
 							className="trim-control margined"
 							onClick={this.addGrabber}
 						>
-							Add <FontAwesomeIcon icon={faGripLinesVertical} />
+							ADD ||
 						</button>
 						<button
 							title="Delete grabber"
 							className="trim-control margined"
 							onClick={this.preDeleteGrabber}
 						>
-							Delete{" "}
-							<FontAwesomeIcon icon={faGripLinesVertical} />
+							DELETE ||
 						</button>
+					</div>
+          <div>
 						<button
 							title="Save changes"
 							className="trim-control"
-							onClick={this.saveVideo}
+							onClick={this.converter}
 						>
-							Save
+							CONVERT
 						</button>
-					</div>
+          </div>
 				</div>
-				{this.state.current_warning !== null ? (
-					<div className={"warning"}>
-						{this.warnings[this.state.current_warning]}
-					</div>
-				) : (
-					""
-				)}
-				{this.state.getReady ? (
-					<button type="submit" onClick={this.converter}>
-						Convert
-					</button>
-				) : (
-					<p>Loading...</p>
-				)}
+				<hr />
 				{this.state.videoReady
-					? // <video
-					  // 	width="320"
-					  // 	height="180"
-					  // 	autoload="metadata"
-					  // 	controls
-					  // >
-					  // 	<source
-					  // 		src={this.state.downloadVideo}
-					  // 		type="video/mp4"
-					  // 	/>
-					  // </video>
-					  this.state.downloadVideo.map((e) => {
+					? this.state.downloadVideo.map((e, i) => {
 							return (
 								<video
 									width="320"
 									height="180"
 									controls
+									controlsList="noplaybackrate"
+									disablePictureInPicture
+									key={"video" + i}
 								>
 									<source src={e} type="video/mp4" />
 								</video>

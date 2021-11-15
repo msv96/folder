@@ -15,11 +15,6 @@ body {
 	padding: 8em 0em;
 	cursor: pointer;
 }
-.file-drop > .file-drop-target.file-drop-dragging-over-target {
-	border-color: #90ee90;
-	transition: border-color 0.3s ease;
-	color: #cacaca;
-}
 .hidden {
 	display: none;
 }
@@ -83,12 +78,9 @@ body {
 }
 .playback {
 	position: relative;
-	margin-top: 1rem;
-	margin-left: 24px;
-	margin-right: 24px;
+	margin: 2rem 24px;
 	height: 10px;
 	background: #2f3b44;
-	margin-bottom: 1rem;
 	border-radius: 1em;
 }
 .playback .seekable {
@@ -102,12 +94,9 @@ body {
 }
 .playback .grabber {
 	position: absolute;
-	top: -4px;
-	bottom: -4px;
-	width: 18px;
+	width: 5px;
 	border-radius: 2px;
 	z-index: 1;
-	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
 	cursor: pointer;
 	transition: transform 0.2s ease;
 	display: flex;
@@ -115,20 +104,20 @@ body {
 	justify-content: center;
 }
 .playback .grabber.start {
-	background: #a8d736;
+	background: green;
+	top: 0px;
+	bottom: -12px;
 }
 .playback .grabber.end {
-	background: #fc4242;
+	background: red;
+	top: -12px;
+	bottom: 0px;
 }
 .playback .grabber:hover {
 	transform: scaleY(1.4);
 }
-.playback .grabber svg {
-	user-select: none;
-	-webkit-user-drag: none;
-}
 .playback .progress {
-	background: #0072cf;
+	background: blue;
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -142,52 +131,37 @@ body {
 	text-align: center;
 }
 .controls .player-controls button {
-	width: 34px;
-	margin: 0 0.125rem;
+	width: 35px;
 }
 .controls .player-controls .play-control {
-	background: #2f3b44;
-	border: 0;
-	color: #a5b0b5;
+	background: white;
+	border: 1px solid black;
+	color: black;
 	padding: 0.5rem;
-	border-radius: 4px;
+	border-radius: 5px;
 	cursor: pointer;
-	font-weight: bold;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
 }
 .controls .player-controls .play-control:hover {
-	background: #445562;
-}
-.controls .player-controls .play-control:active {
-	color: #ffffff;
+	background: lightgrey;
 }
 .controls .settings-control {
-	background: #2f3b44;
-	border: 0;
-	color: #a5b0b5;
+  background: white;
+	border: 1px solid black;
+	color: black;
 	padding: 0.5rem;
-	border-radius: 4px;
+	border-radius: 5px;
 	cursor: pointer;
-	font-weight: bold;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-.controls .settings-control:active {
-	color: #ffffff;
 }
 .controls .settings-control:hover {
-	background: #445562;
+	background: lightgrey;
 }
 .controls .trim-control {
 	background: #0072cf;
 	border: 0;
 	color: #fff;
 	padding: 0.5rem;
-	border-radius: 4px;
+	border-radius: 5px;
 	cursor: pointer;
-	font-weight: bold;
-	text-transform: uppercase;
 	letter-spacing: 0.1em;
 }
 .controls .trim-control:hover {
@@ -205,4 +179,10 @@ body {
 	margin: 1em;
 	justify-content: center;
 	text-align: center;
+}
+video::-webkit-media-controls-fullscreen-button {
+  display: none;
+}
+hr {
+  margin: 1rem 0;
 }
