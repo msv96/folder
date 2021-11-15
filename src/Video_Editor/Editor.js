@@ -8,7 +8,6 @@ import {
 	faPlay,
 } from "@fortawesome/free-solid-svg-icons";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
-const ffmpeg = createFFmpeg({ log: true });
 
 class Editor extends React.Component {
 	constructor(props) {
@@ -22,14 +21,24 @@ class Editor extends React.Component {
 			deletingGrabber: false,
 			videoReady: false,
 			downloadVideo: [],
+			isMask: false,
+			diffX: 0,
+			diffY: 0,
+			dragging: false,
+			styles: { top: 0, left: 0 },
 		};
 		this.playVideo = React.createRef();
 		this.progressBar = React.createRef();
 		this.playBackBar = React.createRef();
+		this.dragStart = this.dragStart.bind(this);
+		this.dragging = this.dragging.bind(this);
+		this.dragEnd = this.dragEnd.bind(this);
 	}
 
+	ffmpeg = createFFmpeg({ log: true });
+
 	load = async () => {
-		await ffmpeg.load();
+		await this.ffmpeg.load();
 	};
 
 	componentDidMount = () => {
@@ -92,7 +101,7 @@ class Editor extends React.Component {
 	};
 
 	converter = async () => {
-		ffmpeg.FS(
+		this.ffmpeg.FS(
 			"writeFile",
 			"test.mp4",
 			await fetchFile(this.props.video_file[0])
@@ -100,7 +109,7 @@ class Editor extends React.Component {
 		for await (let el of this.state.timings) {
 			let d1 = (el.end - el.start).toFixed(1).toString();
 			let d2 = el.start.toFixed(1).toString();
-			await ffmpeg.run(
+			await this.ffmpeg.run(
 				"-i",
 				"test.mp4",
 				"-t",
@@ -111,7 +120,7 @@ class Editor extends React.Component {
 				"mp4",
 				`${d1}.mp4`
 			);
-			const output_video = ffmpeg.FS("readFile", `${d1}.mp4`);
+			const output_video = this.ffmpeg.FS("readFile", `${d1}.mp4`);
 			const video_url = URL.createObjectURL(
 				new Blob([output_video.buffer], { type: "video/mp4" })
 			);
@@ -367,9 +376,41 @@ class Editor extends React.Component {
 		this.playBackBar.current.style.background = `linear-gradient(to right${colors})`;
 	};
 
+	dragStart = (e) => {
+		this.setState({
+			diffX: e.screenX - e.currentTarget.getBoundingClientRect().left,
+			diffY: e.screenY - e.currentTarget.getBoundingClientRect().top,
+			dragging: true,
+		});
+	};
+
+	dragging = (e) => {
+		if (this.state.dragging) {
+			this.setState({
+				styles: {
+					top: e.screenY - this.state.diffY,
+					left: e.screenX - this.state.diffX,
+				},
+			});
+		}
+	};
+
+	dragEnd = () => {
+		this.setState({
+			dragging: false,
+		});
+	};
+
 	render = () => {
 		return (
 			<div className="wrapper">
+				<div
+					className={this.state.isMask ? "mask" : "none"}
+					// style={this.state.styles}
+					// onMouseDown={this.dragStart}
+					// onMouseMove={this.dragging}
+					// onMouseUp={this.dragEnd}
+				></div>
 				<video
 					className="video"
 					autoload="metadata"
@@ -420,46 +461,59 @@ class Editor extends React.Component {
 					<div>
 						<button
 							title="Add grabber"
-							className="trim-control margined"
+							className="trim-control"
 							onClick={this.addGrabber}
 						>
 							ADD ||
 						</button>
 						<button
 							title="Delete grabber"
-							className="trim-control margined"
+							className="trim-control"
 							onClick={this.preDeleteGrabber}
 						>
 							DELETE ||
 						</button>
 					</div>
-          <div>
+					<div>
 						<button
-							title="Save changes"
-							className="trim-control"
+							title="Apply / Remove Mask"
+							className="trim-control evenWidth"
+							onClick={() =>
+								this.setState({
+									isMask: !this.state.isMask,
+								})
+							}
+						>
+							{this.state.isMask ? "REMOVE MASK" : "APPLY MASK"}
+						</button>
+						<button
+							title="Convert Video"
+							className="trim-control evenWidth"
 							onClick={this.converter}
 						>
 							CONVERT
 						</button>
-          </div>
+					</div>
 				</div>
 				<hr />
-				{this.state.videoReady
-					? this.state.downloadVideo.map((e, i) => {
-							return (
-								<video
-									width="320"
-									height="180"
-									controls
-									controlsList="noplaybackrate"
-									disablePictureInPicture
-									key={"video" + i}
-								>
-									<source src={e} type="video/mp4" />
-								</video>
-							);
-					  })
-					: ""}
+				<div className="download_video">
+					{this.state.videoReady
+						? this.state.downloadVideo.map((e, i) => {
+								return (
+									<video
+										width="320"
+										height="180"
+										controls
+										controlsList="noplaybackrate"
+										disablePictureInPicture
+										key={"video" + i}
+									>
+										<source src={e} type="video/mp4" />
+									</video>
+								);
+						  })
+						: ""}
+				</div>
 			</div>
 		);
 	};

@@ -1,4 +1,5 @@
 body {
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 	transition: background-color 0.3s ease, color 0.3s ease;
 }
 .file-drop {
@@ -57,8 +58,6 @@ body {
 .wrapper {
 	width: 60%;
 	max-width: 90%;
-	padding: 1rem;
-	border-radius: 4px;
 	margin: auto;
 	position: absolute;
 	top: 50%;
@@ -73,8 +72,6 @@ body {
 }
 .video {
 	width: 100%;
-	cursor: pointer;
-	border-radius: 1em;
 }
 .playback {
 	position: relative;
@@ -127,6 +124,8 @@ body {
 }
 .controls {
 	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
 	justify-content: space-between;
 	text-align: center;
 }
@@ -145,7 +144,7 @@ body {
 	background: lightgrey;
 }
 .controls .settings-control {
-  background: white;
+	background: white;
 	border: 1px solid black;
 	color: black;
 	padding: 0.5rem;
@@ -163,12 +162,13 @@ body {
 	border-radius: 5px;
 	cursor: pointer;
 	letter-spacing: 0.1em;
+	margin: 0em 0.3em;
 }
 .controls .trim-control:hover {
 	background: #038eff;
 }
-.margined {
-	margin: 0em 0.3em;
+.evenWidth {
+	width: 130px;
 }
 .warning {
 	padding: 0.8em;
@@ -181,8 +181,26 @@ body {
 	text-align: center;
 }
 video::-webkit-media-controls-fullscreen-button {
-  display: none;
+	display: none;
 }
 hr {
-  margin: 1rem 0;
+	margin: 1rem 0;
+}
+.download_video {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+}
+.mask {
+	position: absolute;
+	border: 2px dashed red;
+	background-color: transparent;
+	width: 19vw;
+	height: 33.6vw;
+	cursor: move;
+	z-index: 1;
+}
+.none {
+	display: none;
 }
